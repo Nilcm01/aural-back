@@ -1,4 +1,4 @@
-# Musicapp - Backend
+# Aural - Backend
 
 Repositori del backend de l'aplicació.
 
@@ -8,7 +8,7 @@ A determinar.
 
 ## Llicència
 
-***Musicapp*** © 2024 del grup ***LIS2025-G10*** té llicència [CC BY-NC-SA 4](https://creativecommons.org/licenses/by-nc-sa/4.0).
+***Aural*** © 2025 del grup ***LIS2025-G10*** té llicència [CC BY-NC-SA 4](https://creativecommons.org/licenses/by-nc-sa/4.0).
 
 ### Sou lliure de:
 - Compartir: copiar i redistribuir el material en qualsevol mitjà i format
