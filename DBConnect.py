@@ -17,7 +17,7 @@ db = client.Users
 
 Aural = db.Aural
 
-Aural._one({"name":"Marc", "Friends":[], "punctuations":[{"songName":"La macarena","punctuation":2}]})
+Aural.insert_one({"name":"Marc", "Friends":[], "punctuations":[{"songName":"La macarena","punctuation":2}]})
 
 """
 Per veure la base de dades en si:
