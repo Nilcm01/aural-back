@@ -1,6 +1,6 @@
 # Aural - Backend
 
-Repositori del backend de l'aplicació.
+Aquest repositori és l'entorn de treball de l'aplicació dedicat a la part de backend del sistema.
 
 ## Descripció
 
