@@ -30,18 +30,18 @@ const UserSchema = new mongoose.Schema({
         default: ""
     },
     friends: {
-        type: Array,
-        default: []
+        type: Object,
+        default: {}
     },
     xats: {
+        type: Object,
+        default: {}
+    },
+    publications: {
         type: Array,
         default: []
     },
-    Publications: {
-        type: Array,
-        default: []
-    },
-    Friend_requests: {
+    friend_requests: {
         type: Array,
         default: []
     }

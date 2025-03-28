@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-const Item = require('../models/Item');
+const Users = require('../models/Users');
 const Xats = require('../models/Xats');
 const Content = require('../models/Content');
 
   // Get all users from the DB
   router.get('/users', async (req, res) => {
     try {
-      const items = await Item.find();
-      res.json(items);
+      const users = await Users.find();
+      res.json(users);
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
@@ -25,7 +25,13 @@ const Content = require('../models/Content');
     }
 
     try {
-    const newUser = new Item ({
+    const userExists = await Users.findOne({userId});
+    if (userExists) {
+      res.status(200).send("User already in BD!");
+      return;
+    }
+      
+    const newUser = new Users ({
       userId,
       name,
     });
@@ -49,7 +55,7 @@ const Content = require('../models/Content');
     }
 
     try {
-      const user = await Item.findOne({ userId });
+      const user = await Users.findOne({ userId });
 
       if (!user) {
         return res.status(404).send('User not found');
@@ -75,79 +81,18 @@ const Content = require('../models/Content');
 
     try {
       // Filter result by userId
-      const user = await Item.findOne({ userId });  
+      const user = await Users.findOne({ userId });  
 
       if (!user) {
         return res.status(404).send('User not found');
       }
 
       //  List of friends & friend_requests from user with userId 
-      const userData = { friends: user.friends, friend_requests: user.Friend_requests };
+      const userData = { friends: user.friends, friend_requests: user.friend_requests };
       res.json(userData);
     
     } catch (error) {
       console.error(error.message);
-      res.status(500).send('Server Error');
-    }
-  });
-
-  // Get all xats from a user
-  router.get('/xats', async (req, res) => {
-    const { userId } = req.query;
-
-    // Verify if the userId is present
-    if (!userId) {
-      return res.status(400).send('Bad Request: userId is required');
-    }
-
-    try {
-      // Filter result by userId
-      const user = await Item.findOne({ userId });  
-
-      if (!user) {
-        return res.status(404).send('User not found');
-      }
-
-      const xats = (user.xats);
-
-      res.json(xats);
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
-    }
-  });
-
-  // Search content, from all types (does not search users)
-  router.get('/search-content', async (req,res) => {
-    const { searchquery } = req.query;
-
-    if(!searchquery) {
-      res.status(400).message("Bad request");
-    }
-
-    try {
-      const cont = await Content.find({
-        $or: [
-          { name: { $regex: searchquery, $options: 'i' } },   // 'i' hace que sea insensible a mayúsculas/minúsculas
-          { artist: { $regex: searchquery, $options: 'i' } },
-          { type: { $regex: searchquery, $options: 'i' } },
-          { description: { $regex: searchquery, $options: 'i' } },
-        ]
-      });
-  
-      if (cont.length === 0) {
-        return res.status(404).send('No content found matching your query');
-      }
-
-      const response = {
-        names: cont.map(item => item.name),
-        artists: cont.map(item => item.artist),
-        types: cont.map(item => item.type),
-        descriptions: cont.map(item => item.description),
-      };
-      
-      res.json(response);
-    } catch (error) {
       res.status(500).send('Server Error');
     }
   });

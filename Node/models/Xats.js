@@ -1,12 +1,21 @@
 const mongoose = require('mongoose');
 
 const XatSchema = new mongoose.Schema({
-    ID: {
-        type: String,
-        required: true
+    xatId: {
+        type: Number,
+        required: true,
     }, 
     messages: {
-        type: Array
+        type: Array,
+        default: []
+    },
+    users: {
+        type: Array,
+        default: []
+    },
+    metadata: {
+        type: Object,
+        default: {}
     }
 });
 

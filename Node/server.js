@@ -16,7 +16,9 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
-app.use('/api/items', require('./routes/items'));
+app.use('/api/items', require('./routes/users'));
+app.use('/api/items', require('./routes/content'));
+app.use('/api/items', require('./routes/xats'));
 
 // Home route
 app.get('/', (req, res) => {
