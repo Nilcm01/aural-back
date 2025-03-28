@@ -24,4 +24,29 @@ router.get('/xats', async (req, res) => {
     }
   });
 
+  router.post('/login-user', async (req, res) => {
+    const { userId, name} = req.query
+
+    if(!userId || !name) {
+      res.status(404).send("Bad values");
+    }
+
+    try {
+    const newUser = new Item ({
+      userId,
+      name,
+    });
+
+    await newUser.save();
+
+    res.status(200).send("User added to DB!");
+
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+  
+
 module.exports = router;
