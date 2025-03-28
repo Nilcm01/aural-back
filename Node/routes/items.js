@@ -37,8 +37,32 @@ const Xats = require('../models/Xats');
     }
   });
 
+  // Get all the information from a user to show at profile screen
+  router.get('/profile-info', async (req, res) => {
+    const { userId } = req.query;
+
+    if (!userId) {
+      res.status(400).message("Bad request");
+    }
+
+    try {
+      const user = await Item.findOne({ userId });
+
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
+
+      const userData = { name: user.name, username: user.username, age: user.age, imageURL: user.imageURL};
+
+      res.json(userData);
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
   // Get all friend list and friend request list from a user
-  router.get('/friend-requests', async(req, res) => {
+  router.get('/friends', async(req, res) => {
     const { userId } = req.query;
 
     // Verify if the userId is present
