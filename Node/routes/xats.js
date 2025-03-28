@@ -87,13 +87,13 @@ const Content = require('../models/Content');
 
         try {
             const xat = await Xats.findOne({xatId});
-            const messages = {messages: [xat.messages]};
+            const metadata = {metadata: [xat.metadata]};
 
-            if (!messages) {
+            if (!metadata) {
                 return res.status(404).send('Messages not found');
             }
             
-            res.json(messages);
+            res.json(metadata);
         } catch (error) {
             console.error(err.message);
             res.status(500).send('Server Error');
