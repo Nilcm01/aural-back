@@ -3,7 +3,9 @@ const router = express.Router();
 
 const Item = require('../models/Item');
 const Xats = require('../models/Xats');
+const Content = require('../models/Content');
 
+  // Get all users from the DB
   router.get('/users', async (req, res) => {
     try {
       const items = await Item.find();
@@ -14,6 +16,7 @@ const Xats = require('../models/Xats');
     }
   });
 
+  // Add the user with userId from Spotify API to DB
   router.post('/login-user', async (req, res) => {
     const { userId, name} = req.query
 
@@ -110,6 +113,41 @@ const Xats = require('../models/Xats');
       res.json(xats);
     } catch (err) {
       console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+  // Search content, from all types (does not search users)
+  router.get('/search-content', async (req,res) => {
+    const { searchquery } = req.query;
+
+    if(!searchquery) {
+      res.status(400).message("Bad request");
+    }
+
+    try {
+      const cont = await Content.find({
+        $or: [
+          { name: { $regex: searchquery, $options: 'i' } },   // 'i' hace que sea insensible a mayúsculas/minúsculas
+          { artist: { $regex: searchquery, $options: 'i' } },
+          { type: { $regex: searchquery, $options: 'i' } },
+          { description: { $regex: searchquery, $options: 'i' } },
+        ]
+      });
+  
+      if (cont.length === 0) {
+        return res.status(404).send('No content found matching your query');
+      }
+
+      const response = {
+        names: cont.map(item => item.name),
+        artists: cont.map(item => item.artist),
+        types: cont.map(item => item.type),
+        descriptions: cont.map(item => item.description),
+      };
+      
+      res.json(response);
+    } catch (error) {
       res.status(500).send('Server Error');
     }
   });
