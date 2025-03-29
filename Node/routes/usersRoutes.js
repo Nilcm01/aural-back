@@ -12,7 +12,8 @@ const {
   acceptFriendRequest, 
   removeFriend, 
   userDescription,
-  userAge
+  userAge,
+  rejectFriendRequest
 } = require('../controllers/usersController');
 
 // Get all users from the DB
@@ -41,6 +42,9 @@ router.post('/accept-friend-request', acceptFriendRequest);
 
 // Remove a friend
 router.delete('/remove-friend', removeFriend);
+
+// Reject a friend request
+router.delete('/reject-friend-request', rejectFriendRequest);
 
 // Get user description
 router.put('/user-description', userDescription);

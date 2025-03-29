@@ -294,3 +294,36 @@ exports.userAge = async (req, res) => {
     res.status(500).json({ message: "An error occurred.", error: error.message });
   }
 }
+
+
+// Reject a friend request
+exports.rejectFriendRequest = async (req, res) => {
+  const { userId, friendId } = req.body;
+  if (!userId || !friendId) {
+    return res.status(400).json({ msg: 'userId and friendId are required.' });
+  }
+
+  try {
+    // Busca el usuario que recibe la solicitud
+    const user = await Users.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found.' });
+    }
+
+    // Verifica que la solicitud exista en friend_requests
+    if (!user.friend_requests.includes(friendId)) {
+      return res.status(400).json({ msg: 'Friend request not found.' });
+    }
+
+    // Elimina la solicitud de friend_requests
+    user.friend_requests = user.friend_requests.filter(id => id !== friendId);
+
+    await user.save();
+    res.status(200).json({ msg: 'Friend request rejected.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server error.' });
+  }
+}
+
+module.exports = router;
