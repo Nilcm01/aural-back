@@ -17,7 +17,7 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    password: {
+    description: {
         type: String,
         default: ""
     },

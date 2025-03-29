@@ -16,6 +16,32 @@ const Content = require('../models/Content');
     }
   });
 
+  // Modify the user description
+  router.put('/user-description', async (req, res) => {
+    try {
+      const { userId, description } = req.body; // Use req.body, not req.query
+
+      if (!userId || !description) {
+        return res.status(400).json({ message: "Missing required fields." });
+      }
+
+      const user = await Users.findOne({ userId });
+
+      if (!user) {
+        return res.status(404).json({ message: "User does not exist!" });
+      }
+
+      // Update the user's description
+      user.description = description;
+      await user.save();
+
+      res.status(200).json({ message: "User description updated successfully!" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "An error occurred.", error: error.message });
+    }
+  });
+
   // Add the user with userId from Spotify API to DB
   router.post('/login-user', async (req, res) => {
     const { userId, name} = req.query
@@ -61,7 +87,7 @@ const Content = require('../models/Content');
         return res.status(404).send('User not found');
       }
 
-      const userData = { name: user.name, username: user.username, age: user.age, imageURL: user.imageURL};
+      const userData = { name: user.name, username: user.username, age: user.age, imageURL: user.imageURL, description: user.description};
 
       res.json(userData);
     } catch (error) {
