@@ -7,7 +7,6 @@ exports.users = async (req, res) => {
     const users = await Users.find();
     res.json(users);
   } catch (err) {
-    console.error(err.message);
     res.status(500).send('Server Error');
   }
 };

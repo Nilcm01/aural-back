@@ -21,8 +21,8 @@ const Xats = require('../models/Xats');
             const xats = (user.xats);
 
             res.json(xats);
-        } catch (err) {
-            console.error(err.message);
+        } catch (error) {
+            console.error(error.message);
             res.status(500).send('Server Error');
         }
     }
@@ -45,7 +45,7 @@ const Xats = require('../models/Xats');
             
             res.json(users);
         } catch (error) {
-            console.error(err.message);
+            console.error(error.message);
             res.status(500).send('Server Error');
         }
     }
@@ -68,7 +68,7 @@ const Xats = require('../models/Xats');
             
             res.json(messages);
         } catch (error) {
-            console.error(err.message);
+            console.error(error.message);
             res.status(500).send('Server Error');
         }
     }
@@ -91,7 +91,7 @@ const Xats = require('../models/Xats');
             
             res.json(metadata);
         } catch (error) {
-            console.error(err.message);
+            console.error(error.message);
             res.status(500).send('Server Error');
         }
     }

@@ -2,23 +2,19 @@ const mongoose = require('mongoose');
 
 const PunctuationSchema = new mongoose.Schema({
   userId: {
-    type: String,
-    required: true,
-  },
-  punctuationId: {
-    type: String,
-    required: true,
+    type: Object,
+    default: {}
   },
   entityType: {
     type: String,
     enum: ['list', 'music', 'artist'],
     required: true,
   },
-  score: {
+  stars: {
     type: Number,
     required: true,
   },
-  description: {
+  contentId: {
     type: String,
     default: '',
   },

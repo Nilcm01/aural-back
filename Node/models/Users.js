@@ -1,17 +1,9 @@
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-    userId: {
-        type: String,
-        required: true,
-    },
     name: {
         type: String,
         required: false,
-    },
-    punctuations: {
-        type: Array,
-        default: []
     },
     username: {
         type: String,
@@ -33,14 +25,6 @@ const UserSchema = new mongoose.Schema({
         type: Object,
         default: {}
     },
-    xats: {
-        type: Object,
-        default: {}
-    },
-    publications: {
-        type: Array,
-        default: []
-    },
     friend_requests: {
         type: Array,
         default: []
@@ -49,4 +33,4 @@ const UserSchema = new mongoose.Schema({
 
 // The third parameter 'aural' specifies the exact collection nameusername
 // This connects to the 'aural' collection in the 'Users' database
-module.exports = mongoose.model('Aural', UserSchema, 'Aural');
+module.exports = mongoose.model('Users', UserSchema, 'User');

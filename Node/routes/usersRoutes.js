@@ -14,7 +14,7 @@ const {
   userDescription,
   userAge,
   rejectFriendRequest,
-  searchUser
+  searchUser,
 } = require('../controllers/usersController');
 
 // Get all users from the DB
