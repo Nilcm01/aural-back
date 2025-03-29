@@ -16,9 +16,10 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
-app.use('/api/items', require('./routes/users'));
-app.use('/api/items', require('./routes/content'));
-app.use('/api/items', require('./routes/xats'));
+app.use('/api/items', require('./routes/usersRoutes'));
+app.use('/api/items', require('./routes/contentRoutes'));
+app.use('/api/items', require('./routes/xatsRoutes'));
+app.use('/api/items', require('./routes/punctuationsRoutes'));
 
 // Home route
 app.get('/', (req, res) => {

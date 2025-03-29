@@ -6,7 +6,7 @@ const Xats = require('../models/Xats');
 const Content = require('../models/Content');
 
 // Search content, from all types (does not search users)
-router.get('/search-content', async (req,res) => {
+  exports.searchContent = async (req,res) => {
     const { searchquery } = req.query;
 
     if(!searchquery) {
@@ -16,7 +16,7 @@ router.get('/search-content', async (req,res) => {
     try {
       const cont = await Content.find({
         $or: [
-          { name: { $regex: searchquery, $options: 'i' } },   // 'i' hace que sea insensible a mayúsculas/minúsculas
+          { name: { $regex: searchquery, $options: 'i' } },   // 'i' makes it case-insensitive.
           { artist: { $regex: searchquery, $options: 'i' } },
           { type: { $regex: searchquery, $options: 'i' } },
           { description: { $regex: searchquery, $options: 'i' } },
@@ -38,6 +38,6 @@ router.get('/search-content', async (req,res) => {
     } catch (error) {
       res.status(500).send('Server Error');
     }
-  });
+  }
 
-  module.exports = router;
+  

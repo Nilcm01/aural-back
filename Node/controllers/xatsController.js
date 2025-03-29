@@ -1,38 +1,34 @@
-const express = require('express');
-const router = express.Router();
-
 const Users = require('../models/Users');
 const Xats = require('../models/Xats');
-const Content = require('../models/Content');
 
     // Get all xats from a user
-    router.get('/xats', async (req, res) => {
-    const { userId } = req.query;
+    exports.xats = async (req, res) => {
+        const { userId } = req.query;
 
-    // Verify if the userId is present
-    if (!userId) {
-        return res.status(400).send('Bad Request: userId is required');
-    }
-
-    try {
-        // Filter result by userId
-        const user = await Users.findOne({ userId });  
-
-        if (!user) {
-        return res.status(404).send('User not found');
+        // Verify if the userId is present
+        if (!userId) {
+            return res.status(400).send('Bad Request: userId is required');
         }
 
-        const xats = (user.xats);
+        try {
+            // Filter result by userId
+            const user = await Users.findOne({ userId });  
 
-        res.json(xats);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
+            if (!user) {
+                return res.status(404).send('User not found');
+            }
+
+            const xats = (user.xats);
+
+            res.json(xats);
+        } catch (err) {
+            console.error(err.message);
+            res.status(500).send('Server Error');
+        }
     }
-    });
 
     // Get all users from a xat
-    router.get('/xats-users', async (req,res) => {
+    exports.xatsUsers = async (req,res) => {
         const { xatId } = req.query;
 
         if (!xatId) {
@@ -52,10 +48,10 @@ const Content = require('../models/Content');
             console.error(err.message);
             res.status(500).send('Server Error');
         }
-    });
+    }
 
     // Get all messages from a xat
-    router.get('/xats-messages', async (req,res) => {
+    exports.xatsMessages = async (req,res) => {
         const { xatId } = req.query;
 
         if (!xatId) {
@@ -75,10 +71,10 @@ const Content = require('../models/Content');
             console.error(err.message);
             res.status(500).send('Server Error');
         }
-    });
+    }
 
     // Get all metadata from a xat
-    router.get('/xats-metadata', async (req,res) => {
+    exports.xatsMetadata = async (req,res) => {
         const { xatId } = req.query;
 
         if (!xatId) {
@@ -98,6 +94,4 @@ const Content = require('../models/Content');
             console.error(err.message);
             res.status(500).send('Server Error');
         }
-    });
-
-module.exports = router;
+    }

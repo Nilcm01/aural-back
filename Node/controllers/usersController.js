@@ -1,12 +1,7 @@
-const express = require('express');
-const router = express.Router();
-
 const Users = require('../models/Users');
-const Xats = require('../models/Xats');
-const Content = require('../models/Content');
 
   // Get all users from the DB
-  router.get('/users', async (req, res) => {
+  exports.users = async (req, res) => {
     try {
       const users = await Users.find();
       res.json(users);
@@ -14,10 +9,10 @@ const Content = require('../models/Content');
       console.error(err.message);
       res.status(500).send('Server Error');
     }
-  });
+  }
 
   // Add the user with userId from Spotify API to DB
-  router.post('/login-user', async (req, res) => {
+  exports.loginUser = async (req, res) => {
     const { userId, name} = req.query
 
     if(!userId || !name) {
@@ -25,29 +20,29 @@ const Content = require('../models/Content');
     }
 
     try {
-    const userExists = await Users.findOne({userId});
-    if (userExists) {
-      res.status(200).send("User already in BD!");
-      return;
+      const userExists = await Users.findOne({userId});
+      if (userExists) {
+        res.status(200).send("User already in BD!");
+        return;
+      }
+        
+      const newUser = new Users ({
+        userId,
+        name,
+      });
+
+      await newUser.save();
+
+      res.status(200).send("User added to DB!");
+
+      } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+      }
     }
-      
-    const newUser = new Users ({
-      userId,
-      name,
-    });
-
-    await newUser.save();
-
-    res.status(200).send("User added to DB!");
-
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
-    }
-  });
 
   // Get all the information from a user to show at profile screen
-  router.get('/profile-info', async (req, res) => {
+  exports.profileInfo = async (req, res) => {
     const { userId } = req.query;
 
     if (!userId) {
@@ -68,10 +63,10 @@ const Content = require('../models/Content');
       console.error(error.message);
       res.status(500).send('Server Error');
     }
-  });
+  }
 
   // Get all friend list and friend request list from a user
-  router.get('/friends', async(req, res) => {
+  exports.friends = async(req, res) => {
     const { userId } = req.query;
 
     // Verify if the userId is present
@@ -95,6 +90,6 @@ const Content = require('../models/Content');
       console.error(error.message);
       res.status(500).send('Server Error');
     }
-  });
+  }
   
 module.exports = router;
