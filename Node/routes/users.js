@@ -31,7 +31,6 @@ const Content = require('../models/Content');
         return res.status(404).json({ message: "User does not exist!" });
       }
 
-      // Update the user's description
       user.description = description;
       await user.save();
 
@@ -41,6 +40,31 @@ const Content = require('../models/Content');
       res.status(500).json({ message: "An error occurred.", error: error.message });
     }
   });
+
+    // Modify the user age
+    router.put('/user-age', async (req, res) => {
+      try {
+        const { userId, age } = req.body; // Use req.body, not req.query
+  
+        if (!userId || !age) {
+          return res.status(400).json({ message: "Missing required fields." });
+        }
+  
+        const user = await Users.findOne({ userId });
+  
+        if (!user) {
+          return res.status(404).json({ message: "User does not exist!" });
+        }
+  
+        user.age = age;
+        await user.save();
+  
+        res.status(200).json({ message: "User age updated successfully!" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An error occurred.", error: error.message });
+      }
+    });
 
   // Add the user with userId from Spotify API to DB
   router.post('/login-user', async (req, res) => {
