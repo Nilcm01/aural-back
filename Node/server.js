@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 
 // Load env vars
 dotenv.config();
+console.log('MONGO_URI:', process.env.MONGO_URI);
 
 // Connect to database
 connectDB();
@@ -19,7 +20,7 @@ app.use(cors());
 app.use('/api/items', require('./routes/usersRoutes'));
 app.use('/api/items', require('./routes/contentRoutes'));
 app.use('/api/items', require('./routes/xatsRoutes'));
-//app.use('/api/items', require('./routes/punctuationsRoutes'));
+//app.use('/api/items', require('./routes/punctuationsRoutes')); Not tested yet
 
 // Home route
 app.get('/', (req, res) => {
