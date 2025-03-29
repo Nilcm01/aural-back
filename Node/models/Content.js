@@ -17,6 +17,10 @@ const ContentSchema = new mongoose.Schema({
     },
     description: {
         type: String,
+    },
+    Comments:{
+        type: Array,
+        default: []
     }
 });
 
