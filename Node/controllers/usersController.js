@@ -1,4 +1,5 @@
 const Users = require('../models/Users');
+const stringSimilarity = require('string-similarity');
 
 // Get all users from the DB
 exports.users = async (req, res) => {
@@ -326,4 +327,38 @@ exports.rejectFriendRequest = async (req, res) => {
   }
 }
 
-module.exports = router;
+// Search for similar usernames
+exports.searchUser = async (req, res) => {
+  try {
+    const { username } = req.query;
+
+    if (!username) {
+      return res.status(400).json({ message: "Username is required!" });
+    }
+
+    // Fetch all usernames from the database
+    const users = await Users.find({}, 'username');
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "No users found!" });
+    }
+
+    // Extract usernames from the result
+    const usernames = users.map(user => user.username);
+
+    // Get the three most similar usernames
+    const matches = stringSimilarity.findBestMatch(username, usernames).ratings
+      .sort((a, b) => b.rating - a.rating) // Sort by highest similarity
+      .slice(0, 3) // Get top 3 matches
+      .filter(match => match.rating >= 0.4); // Filter out low-rated matches
+
+    if (matches.length === 0) {
+      return res.status(404).json({ message: "No similar usernames found!" });
+    }
+
+    res.json(matches);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};

@@ -13,7 +13,8 @@ const {
   removeFriend, 
   userDescription,
   userAge,
-  rejectFriendRequest
+  rejectFriendRequest,
+  searchUser
 } = require('../controllers/usersController');
 
 // Get all users from the DB
@@ -51,5 +52,8 @@ router.put('/user-description', userDescription);
 
 // Get user age
 router.put('/user-age', userAge);
+
+// Returns the top three matching usernames for the provided one
+router.get('/search-user', searchUser);
 
 module.exports = router;
