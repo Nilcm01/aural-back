@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "dotenv": "^16.4.7",
     "string-similarity": "^4.0.4"
   }
 }

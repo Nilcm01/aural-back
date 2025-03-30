@@ -17,8 +17,10 @@ app.use(cors());
 
 // Routes
 app.use('/api/items', require('./routes/usersRoutes'));
-app.use('/api/items', require('./routes/contentRoutes'));
+// app.use('/api/items', require('./routes/contentRoutes'));
 app.use('/api/items', require('./routes/xatsRoutes'));
+app.use('/api/items', require('./routes/publicationsRoutes'));
+
 //app.use('/api/items', require('./routes/punctuationsRoutes')); Not tested yet
 
 // Home route

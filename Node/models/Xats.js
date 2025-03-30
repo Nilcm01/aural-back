@@ -21,4 +21,4 @@ const XatSchema = new mongoose.Schema({
 
 // The third parameter 'aural' specifies the exact collection name
 // This connects to the 'aural' collection in the 'Users' database
-module.exports = mongoose.model('Xats', XatSchema, 'Xats');
+module.exports = mongoose.model('Xats', XatSchema, 'PrivatMessage');
