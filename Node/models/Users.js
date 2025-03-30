@@ -49,4 +49,4 @@ const UserSchema = new mongoose.Schema({
 
 // The third parameter 'aural' specifies the exact collection nameusername
 // This connects to the 'aural' collection in the 'Users' database
-module.exports = mongoose.model('Aural', UserSchema, 'Aural');
+module.exports = mongoose.model('Aural', UserSchema, 'User');
