@@ -15,12 +15,12 @@ exports.allPublications = async (req, res) => {
 
 exports.addPublication = async (req, res) => {
     try {
-        const { username, content } = req.body;
-        if(!username || !content){
+        const { userId, content } = req.body;
+        if(!userId || !content){
             return res.status(400).json({ msg: 'Please provide all fields'});
         }
 
-        const user = await Users.findOne({ username }, "_id"); // Search by userId, return only _id
+        const user = await Users.findOne({ userId }, "_id"); // Search by userId, return only _id
 
         if (!user) {
             return res.status(400).json({ msg: 'User does not exist'});
