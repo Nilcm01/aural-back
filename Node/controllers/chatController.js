@@ -1,4 +1,5 @@
 const Chat = require('../models/Chat');
+const User = require('../models/Users');
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -116,8 +117,9 @@ exports.chatsFromUser = async (req, res) => {
     }
     
     // Find all chats where this user is a participant
+    const userObjectId = await User.find({ userId: userId }).select('_id');
     const chats = await Chat.find({
-      'participants.userId': userId
+      'participants.userId': userObjectId
     }).select('-messages'); // Exclude messages for better performance
     
     if (!chats || chats.length === 0) {
