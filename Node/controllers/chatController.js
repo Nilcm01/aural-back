@@ -143,13 +143,13 @@ exports.addUserToChat = async (req, res) => {
   try {
 
     if (!mongoose.isValidObjectId(chatId)) {
-      return res.status(400).json({ message: 'Invalid chatId format.' });
+      return res.status(400).json({ return: 0, message: 'Invalid chatId format.' });
     }
 
     const chat = await Chat.findById(chatId);
 
     if (!chat) {
-      return res.status(404).json({ message: 'Chat not found.' });
+      return res.status(404).json({ return: 0, message: 'Chat not found.' });
     }
 
     const isParticipant = chat.participants.some(participant =>
@@ -157,15 +157,15 @@ exports.addUserToChat = async (req, res) => {
     );
 
     if (isParticipant) {
-      return res.status(400).json({ message: 'User is already a participant in this chat.' });
+      return res.status(400).json({ return: 0, message: 'User is already a participant in this chat.' });
     }
 
     chat.participants.push({ userId, admin: false});
     await chat.save();
 
-    res.status(200).json({ message: 'User added to chat successfully.', chat });
+    res.status(200).json({ return: 1, message: 'User added to chat successfully.'});
   } catch (error) {
     console.error('Error adding user to chat:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({ return: 0,  message: 'Internal server error.' });
   }
 };
