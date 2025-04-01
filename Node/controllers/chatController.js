@@ -132,3 +132,40 @@ exports.chatsFromUser = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+
+exports.addUserToChat = async (req, res) => {
+  const { chatId, userId } = req.body;
+
+  if (!chatId || !userId) {
+    return res.status(400).json({ message: 'chatId and userId are required.' });
+  }
+
+  try {
+
+    if (!mongoose.isValidObjectId(chatId)) {
+      return res.status(400).json({ message: 'Invalid chatId format.' });
+    }
+
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ message: 'Chat not found.' });
+    }
+
+    const isParticipant = chat.participants.some(participant =>
+      participant.userId.toString() === userId
+    );
+
+    if (isParticipant) {
+      return res.status(400).json({ message: 'User is already a participant in this chat.' });
+    }
+
+    chat.participants.push({ userId, admin: false});
+    await chat.save();
+
+    res.status(200).json({ message: 'User added to chat successfully.', chat });
+  } catch (error) {
+    console.error('Error adding user to chat:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
