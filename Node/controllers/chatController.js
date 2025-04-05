@@ -93,6 +93,7 @@ exports.chatMetadata = async (req, res) => {
     const metadata = {
       _id: chat._id,
       name: chat.name,
+      private: chat.private,
       participantsCount: chat.participants.length,
       messagesCount: chat.messages.length,
       lastMessageTimestamp: chat.messages.length > 0 
@@ -230,14 +231,14 @@ exports.createChat = async (req, res) => {
 
     const newChat = new Chat({
       private: !group,
-      name: group ? name : null,
+      name: name,
       participants,
       messages: []
     });
 
     await newChat.save();
 
-    res.status(201).json({ return: 1, message: 'Chat created successfully.' });
+    res.status(201).json({ return: 1, message: 'Chat created successfully.', chatId: newChat._id });
   } catch (error) {
     console.error('Error creating chat:', error);
     res.status(500).json({ return: 0, message: 'Internal server error.' });

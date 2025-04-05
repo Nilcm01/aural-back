@@ -33,14 +33,14 @@ const { chatUsers, chatMessages, chatMetadata, chatsFromUser, addUserToChat, rem
     /*
     use JSON to send the data in the body
     {
-        "group": true,
+        "private": true, -> true: DM // false: group
         "users": [
           "nilcm01",
           "tonijoanllompartaz"
         ],
-        "name": "testingroup"
+        "name": "group name"
       } */
-    // Create a new chat: group, users, name
+    // Create a new chat: private, users, name
     router.post('/create-chat', createChat);
 
     /*
