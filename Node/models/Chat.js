@@ -16,6 +16,10 @@ const ChatSchema = new mongoose.Schema({
       type: [ParticipantSchema],
       default: []
     },
+    private: {
+      type: Boolean,
+      required: true
+    },
     messages: {
       type: [MessageSchema],
       default: []
