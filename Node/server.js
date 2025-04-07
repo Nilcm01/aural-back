@@ -20,8 +20,8 @@ app.use('/api/items', require('./routes/usersRoutes'));
 // app.use('/api/items', require('./routes/contentRoutes'));
 app.use('/api/items', require('./routes/chatRoutes'));
 app.use('/api/items', require('./routes/publicationsRoutes'));
-
-//app.use('/api/items', require('./routes/punctuationsRoutes')); Not tested yet
+app.use('/api/items', require('./routes/punctuationsRoutes'));
+app.use('/api/items', require('./routes/commentRoutes'));
 
 // Home route
 app.get('/', (req, res) => {
