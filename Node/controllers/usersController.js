@@ -202,9 +202,11 @@ exports.acceptFriendRequest = async (req, res) => {
       return res.status(400).send('No friend request from this user');
     }
 
-    user.friend_requests = user.friend_requests.filter((id) => id !== friendId);
-    user.friends[friendId] = true;
-    friend.friends[userId] = true;
+    // Check for request from friend in user.friend_requests[]
+    // format: user.friend_requests['friend1Id', 'friend2Id', ...]
+    user.friend_requests = user.friend_requests.filter(id => id !== friendId);
+    user.friends[friendId] = friendId; // Add friend to user's friends list
+    friend.friends[userId] = userId; // Add user to friend's friends list
 
     await user.save();
     await friend.save();
@@ -232,8 +234,8 @@ exports.removeFriend = async (req, res) => {
       return res.status(404).send('User or friend not found');
     }
 
-    delete user.friends[friendId];
-    delete friend.friends[userId];
+    user.friends = user.friends.filter(id => id !== friendId);
+    friend.friends = friend.friends.filter(id => id !== userId);
 
     await user.save();
     await friend.save();
