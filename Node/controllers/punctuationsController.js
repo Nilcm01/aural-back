@@ -15,6 +15,16 @@ exports.createPunctuation = async (req, res) => {
   }
 
   try {
+    const existingPunctuation = await Punctuations.findOne({
+      userId: user._id,
+      entityId,
+      entityType,
+    });
+
+    if (existingPunctuation) {
+      return res.status(400).send('User has already rated this entity');
+    }
+    
     const newPunctuation = new Punctuations({
       userId: user._id,
       entityId,
