@@ -15,25 +15,15 @@ exports.createPunctuation = async (req, res) => {
   }
 
   try {
-    const existingPunctuation = await Punctuations.findOne({
-      userId: user._id,
-      entityId,
-      entityType,
+    const updatedPunctuation = await Punctuations.findOneAndUpdate(
+      { userId: user._id, entityId, entityType }, 
+      { score },
+      { new: true, upsert: true } 
+    );
+    res.status(200).json({
+      message: updatedPunctuation.isNew ? 'Punctuation created successfully' : 'Punctuation updated successfully',
+      punctuation: updatedPunctuation,
     });
-
-    if (existingPunctuation) {
-      return res.status(400).send('User has already rated this entity');
-    }
-    
-    const newPunctuation = new Punctuations({
-      userId: user._id,
-      entityId,
-      entityType,
-      score,
-    });
-
-    await newPunctuation.save();
-    res.status(201).send('Punctuation created successfully');
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
