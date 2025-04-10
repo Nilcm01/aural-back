@@ -28,7 +28,6 @@ exports.createComment = async (req, res) => {
       message: 'Comment created successfully',
       commentId: savedComment._id, // Retorna l'ObjectId del nou comentari
     });
-    res.status(201).send('Comment created successfully');
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
