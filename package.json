@@ -2,5 +2,9 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "string-similarity": "^4.0.4"
-  }
+  },
+  "scripts":{
+    "start": "node Node/server.js",
+    "deploy": "gcloud preview app deploy"
+}
 }
