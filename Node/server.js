@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const http = require('http');
+const { socketServerInit } = require('./socketServer/socketServer');
 
 // Load env vars
 dotenv.config();
@@ -10,6 +12,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
 
 // Middleware
 app.use(express.json());
@@ -28,6 +31,8 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+socketServerInit(server);
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
