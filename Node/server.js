@@ -15,6 +15,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Middleware to serve static files
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/api/items', require('./routes/usersRoutes'));
 // app.use('/api/items', require('./routes/contentRoutes'));
@@ -22,6 +25,7 @@ app.use('/api/items', require('./routes/chatRoutes'));
 app.use('/api/items', require('./routes/publicationsRoutes'));
 app.use('/api/items', require('./routes/punctuationsRoutes'));
 app.use('/api/items', require('./routes/commentRoutes'));
+app.use('/api/items', require('./routes/uploadRoutes'));
 
 // Home route
 app.get('/', (req, res) => {
