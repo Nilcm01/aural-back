@@ -1,5 +1,6 @@
 const Comments = require('../models/Comment');
 const Users = require('../models/Users');
+const axios = require('axios');
 
 // Create a new comment
 exports.createComment = async (req, res) => {
@@ -13,6 +14,15 @@ exports.createComment = async (req, res) => {
     const user = await Users.findOne({ userId }, "_id");
     if (!user) {
       return res.status(404).send('User not found');
+    }
+
+    // Check if message contains hate speech
+    const response = await axios.post('https://check-hate-speech-966617344052.us-central1.run.app/check_hate', {
+      text: content
+    });
+
+    if (response.data.hate) {
+      return res.status(403).send('Content flagged as hate speech');
     }
 
     const newComment = new Comments({

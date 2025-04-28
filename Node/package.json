@@ -1,10 +1,9 @@
 {
   "dependencies": {
-    "mongodb": "*",
-    "types": "*",
     "accepts": "*",
     "anymatch": "*",
     "array-flatten": "*",
+    "axios": "^1.9.0",
     "balanced-match": "*",
     "binary-extensions": "*",
     "body-parser": "*",
@@ -108,6 +107,7 @@
     "touch": "*",
     "tr46": "*",
     "type-is": "*",
+    "types": "*",
     "undefsafe": "*",
     "unpipe": "*",
     "utils-merge": "*",
