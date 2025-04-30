@@ -47,11 +47,13 @@ exports.getStats = async (req, res) => {
         const history = await History.find({ userId });
 
         const now = new Date();
+        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
         const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
         const totalPlaytime = history.reduce((sum, entry) => sum + entry.length, 0);
+        const playtimeSixHoursAgo = history.filter(entry => entry.timestamp > sixHoursAgo).reduce((sum, entry) => sum + entry.length, 0);
         const playtimeToday = history.filter(entry => entry.timestamp > oneDayAgo).reduce((sum, entry) => sum + entry.length, 0);
         const playtimeLast7Days = history.filter(entry => entry.timestamp > sevenDaysAgo).reduce((sum, entry) => sum + entry.length, 0);
         const playtimeLast30Days = history.filter(entry => entry.timestamp > thirtyDaysAgo).reduce((sum, entry) => sum + entry.length, 0);
@@ -61,7 +63,6 @@ exports.getStats = async (req, res) => {
                 const id = entry[key + 'Id'];
                 if (!acc[id]) {
                     acc[id] = {
-                        id,
                         name: entry[key + 'Name'],
                         imageUrl: key === 'artist' ? entry.artistImageUrl : entry.albumImageUrl,
                         playtime: 0,
@@ -82,11 +83,13 @@ exports.getStats = async (req, res) => {
                 .slice(0, 10);
         };
 
+        const topSongsSixHours = calculateTop(history.filter(entry => entry.timestamp > sixHoursAgo), 'song');
         const topSongsToday = calculateTop(history.filter(entry => entry.timestamp > oneDayAgo), 'song');
         const topSongsLast7Days = calculateTop(history.filter(entry => entry.timestamp > sevenDaysAgo), 'song');
         const topSongsLast30Days = calculateTop(history.filter(entry => entry.timestamp > thirtyDaysAgo), 'song');
         const topSongsAllTime = calculateTop(history, 'song');
 
+        const topArtistsSixHours  = calculateTop(history.filter(entry => entry.timestamp > sixHoursAgo), 'artist');
         const topArtistsToday = calculateTop(history.filter(entry => entry.timestamp > oneDayAgo), 'artist');
         const topArtistsLast7Days = calculateTop(history.filter(entry => entry.timestamp > sevenDaysAgo), 'artist');
         const topArtistsLast30Days = calculateTop(history.filter(entry => entry.timestamp > thirtyDaysAgo), 'artist');
@@ -97,16 +100,19 @@ exports.getStats = async (req, res) => {
             message: 'Stats retrieved successfully.',
             stats: {
                 totalPlaytime,
+                playtimeSixHoursAgo,
                 playtimeToday,
                 playtimeLast7Days,
                 playtimeLast30Days,
                 topSongs: {
+                    sixHours: topSongsSixHours,
                     today: topSongsToday,
                     last7Days: topSongsLast7Days,
                     last30Days: topSongsLast30Days,
                     allTime: topSongsAllTime
                 },
                 topArtists: {
+                    sixHours: topArtistsSixHours,
                     today: topArtistsToday,
                     last7Days: topArtistsLast7Days,
                     last30Days: topArtistsLast30Days,
