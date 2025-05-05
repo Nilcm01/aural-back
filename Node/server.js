@@ -29,6 +29,8 @@ app.use('/api/items', require('./routes/punctuationsRoutes'));
 app.use('/api/items', require('./routes/commentRoutes'));
 app.use('/api/items', require('./routes/lyricsRoutes'));
 app.use('/api/items', require('./routes/uploadRoutes'));
+app.use('/api/items', require('./routes/historyRoutes'));
+
 
 // Home route
 app.get('/', (req, res) => {
