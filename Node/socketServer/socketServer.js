@@ -1,7 +1,7 @@
 const socketIO = require('socket.io');
 const getChatMessages = require('./getChatMessages');
 const sendChatMessage = require('./sendChatMessage');
-const { joinRadio, leaveRadio, getLiveRadios, createRadio } = require('../controllers/radioController');
+const { joinRadio, leaveRadio, getLiveRadios, createRadio, deleteRadioById } = require('../controllers/radioController');
 const Radio = require('../models/Radio');
 
 function socketServerInit(server) {
@@ -54,32 +54,52 @@ function socketServerInit(server) {
         const result = await joinRadio(radioId, userId);
         socket.join(radioId);
         console.log(`Socket ${socket.id} joined radio room ${radioId}`);
-        
-        const radio = await Radio.findById(radioId); // Get current state of the radio from db
+
+        const radio = await Radio.findById(radioId).populate('participants', 'username');
+
         if (!radio) {
           return socket.emit('radioError', 'Radio not found.');
         }
 
-        socket.emit('radioState', {
+        // Emit the current state of the radio to the user who joined
+        socket.emit('radioJoined', {
+          radioId,
           currentSong: radio.currentSong,
-          currentTime: radio.currentTime
-        }); // Send the current state of the radio to the user who joined
-        
+          currentTime: radio.currentTime,
+          participants: radio.participants
+        });
+
+        // Emit to all other participants in the radio room
+        socket.to(radioId).emit('radioParticipantJoined', {
+          radioId,
+          userId
+        });
+
       } catch (error) {
         socket.emit('radioError', error.message);
       }
     });
+
 
     socket.on('leaveRadio', async (radioId, userId) => {
       try {
         const result = await leaveRadio(radioId, userId);
         socket.leave(radioId);
         console.log(`Socket ${socket.id} left radio room ${radioId}`);
-        socket.emit('radioState', result.radio); // Send the current state of the radio to the user who left
+
+        // Emit the updated state to the user who left
+        socket.emit('radioLeft', { radioId });
+
+        // Emit to all other participants in the radio room
+        socket.to(radioId).emit('radioParticipantLeft', {
+          radioId,
+          userId
+        });
       } catch (error) {
         socket.emit('radioError', error.message);
       }
     });
+
 
     socket.on('getLiveRadios', async () => {
       try {
@@ -93,7 +113,33 @@ function socketServerInit(server) {
     socket.on('createRadio', async (data) => {
       try {
         const result = await createRadio(data);
+
+        // Emit the new radio to the creator
         socket.emit('radioCreated', result.radio);
+
+        // Emit the new radio to all other clients
+        io.emit('radioListUpdated', {
+          action: 'created',
+          radio: result.radio
+        });
+
+      } catch (error) {
+        socket.emit('radioError', error.message);
+      }
+    });
+
+    socket.on('deleteRadio', async ({ radioId, userId }) => {
+      try {
+        const deletedRadio = await deleteRadioById({ radioId, userId });
+
+        if (deletedRadio) {
+          io.emit('radioListUpdated', { // Notify all listeners about the deletion
+            action: 'deleted',
+            radioId,
+            deletedBy: userId
+          });
+        }
+
       } catch (error) {
         socket.emit('radioError', error.message);
       }

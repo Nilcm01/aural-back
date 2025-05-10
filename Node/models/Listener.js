@@ -9,7 +9,7 @@ const ListenerSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  eventId: {
+  radioId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event',
     required: true
