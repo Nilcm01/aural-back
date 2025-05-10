@@ -48,4 +48,7 @@ use JSON to send the data in the body
 // Delete a radio: radioId, userId (creator only)
 router.delete('/delete-radio', deleteRadio);
 
+// Get a radio by its ID: radioId
+router.get('/:radioId', getRadioById);
+
 module.exports = router;
