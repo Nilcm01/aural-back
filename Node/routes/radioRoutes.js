@@ -6,7 +6,8 @@ const {
   getLiveRadios,
   joinRadio,
   leaveRadio,
-  deleteRadio
+  deleteRadio,
+  getRadioById
 } = require('../controllers/radioController');
 
 /*
