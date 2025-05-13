@@ -1,8 +1,7 @@
 const socketIO = require('socket.io');
 const getChatMessages = require('./getChatMessages');
 const sendChatMessage = require('./sendChatMessage');
-const { joinRadio, leaveRadio, getLiveRadios, createRadio, deleteRadioById } = require('../controllers/radioController');
-const Radio = require('../models/Radio');
+const { radios } = require('../Radios');
 
 function socketServerInit(server) {
   const io = socketIO(server, {
@@ -51,15 +50,15 @@ function socketServerInit(server) {
 
     socket.on('joinRadio', async (radioId, userId) => {
       try {
-        const result = await joinRadio(radioId, userId);
-        socket.join(radioId);
-        console.log(`Socket ${socket.id} joined radio room ${radioId}`);
-
-        const radio = await Radio.findById(radioId).populate('participants', 'username');
-
+        const radio = radios.get(radioId);
         if (!radio) {
           return socket.emit('radioError', 'Radio not found.');
         }
+
+        // Add the user to the radio
+        radio.participants.push({ userId });
+        socket.join(radioId);
+        console.log(`Socket ${socket.id} joined radio room ${radioId}`);
 
         // Emit the current state of the radio to the user who joined
         socket.emit('radioJoined', {
@@ -83,7 +82,14 @@ function socketServerInit(server) {
 
     socket.on('leaveRadio', async (radioId, userId) => {
       try {
-        const result = await leaveRadio(radioId, userId);
+        const radio = radios.get(radioId);
+        if (!radio) {
+          return socket.emit('radioError', 'Radio not found.');
+        }
+
+        // Remove the user from the participants list
+        radio.participants = radio.participants.filter(p => p.userId !== userId);
+
         socket.leave(radioId);
         console.log(`Socket ${socket.id} left radio room ${radioId}`);
 
@@ -101,117 +107,149 @@ function socketServerInit(server) {
     });
 
 
-    socket.on('getLiveRadios', async () => {
-      try {
-        const radios = await getLiveRadios();
-        socket.emit('liveRadios', radios);
-      } catch (error) {
-        socket.emit('radioError', error.message);
-      }
+    socket.on('getLiveRadios', () => {
+      const liveRadios = Array.from(radios.values());
+      socket.emit('liveRadios', liveRadios);
     });
 
-    socket.on('createRadio', async (data) => {
+    socket.on('createRadio', (data) => {
+      const { name, creatorId, playlistId } = data;
+
+      if (!name || !creatorId) {
+        return socket.emit('radioError', 'Name and creatorId are required.');
+      }
+
       try {
-        const result = await createRadio(data);
+        const radioId = Math.random().toString(36).substring(2, 9);
+        const newRadio = {
+          radioId,
+          name,
+          creator: creatorId,
+          playlistId,
+          participants: [{ userId: creatorId }],
+          currentSong: null,
+          currentTime: 0
+        };
 
-        // Emit the new radio to the creator
-        socket.emit('radioCreated', result.radio);
+        radios.set(radioId, newRadio);
 
-        // Emit the new radio to all other clients
-        io.emit('radioListUpdated', {
-          action: 'created',
-          radio: result.radio
+        socket.join(radioId);
+        socket.emit('radioCreated', newRadio);
+        socket.to(radioId).emit('radioParticipantJoined', {
+          radioId,
+          userId: creatorId
         });
-
       } catch (error) {
-        socket.emit('radioError', error.message);
+        console.error('Error creating radio:', error);
+        socket.emit('radioError', 'Internal server error.');
       }
     });
 
-    socket.on('deleteRadio', async ({ radioId, userId }) => {
-      try {
-        const deletedRadio = await deleteRadioById({ radioId, userId });
+    socket.on('deleteRadio', (data) => {
+      const { radioId, userId } = data;
 
-        if (deletedRadio) {
-          io.emit('radioListUpdated', { // Notify all listeners about the deletion
-            action: 'deleted',
-            radioId,
-            deletedBy: userId
-          });
+      if (!radioId || !userId) {
+        return socket.emit('radioError', 'radioId and userId are required.');
+      }
+
+      try {
+        const radio = radios.get(radioId);
+        if (!radio) return socket.emit('radioError', 'Radio not found.');
+        if (radio.creator !== userId) {
+          return socket.emit('radioError', 'Only the creator can delete the radio.');
         }
 
+        radios.delete(radioId);
+
+        io.to(radioId).emit('radioDeleted', { radioId });
+        io.socketsLeave(radioId); // remove all sockets from the room
       } catch (error) {
-        socket.emit('radioError', error.message);
+        console.error('Error deleting radio:', error);
+        socket.emit('radioError', 'Internal server error.');
+      }
+    });
+
+    socket.on('updateSong', (data) => {
+      const { radioId, userId, songId } = data;
+
+      if (!radioId || !userId || !songId) {
+        return socket.emit('radioError', 'radioId, userId, and songId are required.');
+      }
+
+      try {
+        const radio = radios.get(radioId);
+        if (!radio) return socket.emit('radioError', 'Radio not found.');
+        if (radio.creator !== userId) {
+          return socket.emit('radioError', 'Only the creator can change the song.');
+        }
+
+        radio.currentSong = songId;
+        radio.currentTime = 0;
+
+        io.to(radioId).emit('songUpdated', {
+          radioId,
+          currentSong: songId,
+          currentTime: 0
+        });
+      } catch (error) {
+        console.error('Error updating song:', error);
+        socket.emit('radioError', 'Internal server error.');
+      }
+    });
+
+    socket.on('getRadioById', (radioId) => {
+      try {
+        const radio = radios.get(radioId);
+        if (!radio) return socket.emit('radioError', 'Radio not found.');
+        socket.emit('radioData', radio);
+      } catch (error) {
+        socket.emit('radioError', 'Internal server error.');
       }
     });
 
     //========== Radio Playback Control ==========
 
-    socket.on('radioPlay', async ({ radioId, userId }) => {
-      try {
-        const radio = await Radio.findById(radioId);
-        if (!radio) return socket.emit('radioError', 'Radio not found.');
-        if (radio.creator.toString() !== userId) {
-          return socket.emit('radioError', 'Permission denied to play radio.');
-        }
-    
-        // Update only if it was paused
-    
-        io.to(radioId).emit('radioPlay', { radioId });
-      } catch (error) {
-        socket.emit('radioError', error.message);
+    // This event is emitted by the creator to sync the time for all participants
+    socket.on('syncTime', (data) => {
+      const { radioId, userId, currentTime } = data;
+      const radio = radios.get(radioId);
+
+      if (!radio) return socket.emit('radioError', 'Radio not found.');
+      if (radio.creator !== userId) {
+        return socket.emit('radioError', 'Only the creator can sync time.');
       }
+
+      radio.currentTime = currentTime;
+
+      socket.to(radioId).emit('timeSynced', {
+        radioId,
+        currentTime
+      });
     });
 
-    socket.on('radioPause', async ({ radioId, userId }) => {
-      try {
-        const radio = await Radio.findById(radioId);
-        if (!radio) return socket.emit('radioError', 'Radio not found.');
-        if (radio.creator.toString() !== userId) {
-          return socket.emit('radioError', 'Permission denied to pause radio.');
-        }
+    // Pause song (creator only)
+    socket.on('pauseSong', ({ radioId, userId }) => {
+      const radio = radios.get(radioId);
 
-        io.to(radioId).emit('radioPause', { radioId });
-      } catch (error) {
-        socket.emit('radioError', error.message);
+      if (!radio) return socket.emit('radioError', 'Radio not found.');
+      if (radio.creator !== userId) {
+        return socket.emit('radioError', 'Only the creator can pause the song.');
       }
-    });
-    // Change current song time (creator only)
-    socket.on('radioSeek', async ({ radioId, userId, time }) => {
-      try {
-        const radio = await Radio.findById(radioId);
-        if (!radio) return socket.emit('radioError', 'Radio not found.');
-        if (radio.creator.toString() !== userId) {
-          return socket.emit('radioError', 'Permission denied to seek radio.');
-        }
-    
-        radio.currentTime = time;
-        await radio.save();
-    
-        io.to(radioId).emit('radioSeek', { radioId, time });
-      } catch (error) {
-        socket.emit('radioError', error.message);
-      }
+
+      io.to(radioId).emit('songPaused', { radioId });
     });
 
-    socket.on('radioChangeSong', async ({ radioId, userId, song }) => {
-      try {
-        const radio = await Radio.findById(radioId);
-        if (!radio) return socket.emit('radioError', 'Radio not found.');
-        if (radio.creator.toString() !== userId) {
-          return socket.emit('radioError', 'Permission denied to change song.');
-        }
-    
-        radio.currentSong = song;
-        radio.currentTime = 0;
-        await radio.save();
-    
-        io.to(radioId).emit('radioChangeSong', { radioId, song });
-      } catch (error) {
-        socket.emit('radioError', error.message);
+    // Resume song (creator only)
+    socket.on('resumeSong', ({ radioId, userId }) => {
+      const radio = radios.get(radioId);
+
+      if (!radio) return socket.emit('radioError', 'Radio not found.');
+      if (radio.creator !== userId) {
+        return socket.emit('radioError', 'Only the creator can resume the song.');
       }
+
+      io.to(radioId).emit('songResumed', { radioId });
     });
-    
     
     //========== Disconnect ==========
     socket.on('disconnect', () => {
