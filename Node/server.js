@@ -31,10 +31,6 @@ app.use('/api/items', require('./routes/lyricsRoutes'));
 app.use('/api/items', require('./routes/uploadRoutes'));
 app.use('/api/items', require('./routes/historyRoutes'));
 
-
-// Radio routes
-app.use('/api/items', require('./routes/radioRoutes'));
-
 // Home route
 app.get('/', (req, res) => {
   res.send('API is running...');
