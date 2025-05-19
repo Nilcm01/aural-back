@@ -104,6 +104,14 @@ exports.getTopRatedEntities = async (req, res) => {
           totalRatings: { $sum: 1 },
         },
       },
+      {
+        $project: {
+          _id: 0,
+          entityId: '$_id',
+          averageScore: 1,
+          totalRatings: 1,
+        },
+      },
       { $sort: { averageScore: -1 } }, 
     ]);
 
@@ -140,7 +148,8 @@ exports.getTopWeightedEntities = async (req, res) => {
       },
       {
         $project: {
-          _id: 1,
+          _id: 0,
+          entityId: '$_id',
           averageScore: 1,
           totalRatings: 1,
           weightedScore: { $multiply: ['$averageScore', '$totalRatings'] }, 
@@ -177,6 +186,13 @@ exports.getMostRatedEntities = async (req, res) => {
         $group: {
           _id: '$entityId',
           totalRatings: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          entityId: '$_id',
+          totalRatings: 1,
         },
       },
       { $sort: { totalRatings: -1 } },
