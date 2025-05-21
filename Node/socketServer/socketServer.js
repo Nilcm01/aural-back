@@ -2,6 +2,8 @@ const socketIO = require('socket.io');
 const getChatMessages = require('./getChatMessages');
 const sendChatMessage = require('./sendChatMessage');
 const { radios } = require('../Radios');
+const { jams } = require('../Jams');
+
 
 function socketServerInit(server) {
   const io = socketIO(server, {
@@ -64,7 +66,8 @@ function socketServerInit(server) {
           playlistId,
           participants: [{ userId: socket.id }],
           currentSong: null,
-          currentStatus: 'paused' // paused/playing
+          currentStatus: 'paused', // paused/playing
+          currentTime: 0
         };
 
         radios.set(radioId, newRadio);
@@ -202,7 +205,7 @@ function socketServerInit(server) {
 
         // Delete the radio from the map
         radios.delete(radioId);
-        console.log(`Radio ${radioId} eliminada por el creador.`);
+        console.log(`Radio ${radioId} deleted by creator.`);
       } catch (error) {
         console.error('Error deleting radio:', error);
         socket.emit('radioError', 'Internal server error.');
@@ -277,25 +280,249 @@ function socketServerInit(server) {
 
     //========== JAM Events ==========
 
-    /*
-    TO DO:
-      createJam
-      getLiveJams
-      joinJam
-      sendCurrentTime
-      leaveJam
-      deleteJam
-      updateJam
-      updateHost : This event is emitted when the host of the jam leaves (next participant in list becomes host).
-    */
-    
-    //========== JAM Playback Control ==========
+    socket.on('createJam', (data) => {
+      const { name, creatorId, songIds } = data;
 
-    /*
-    TO DO:
-      updateJamTime
-      updateJamStatus
-    */
+      if (!name || !creatorId || !Array.isArray(songIds)) {
+        return socket.emit('jamError', 'Name, creatorId, and songIds are required.');
+      }
+
+      try {
+        const jamId = Math.random().toString(36).substring(2, 9);
+        const newJam = {
+          jamId,
+          name,
+          host: socket.id,
+          songIds: [...songIds], // Copy the songIds array
+          participants: [{ userId: socket.id }],
+          currentSong: songIds[0] || null,
+          currentStatus: 'paused',
+          currentTime: 0
+        };
+
+        jams.set(jamId, newJam);
+        socket.join(jamId);
+        socket.jamId = jamId;
+
+        socket.emit('jamCreated', newJam);
+        socket.to(jamId).emit('jamParticipantJoined', {
+          jamId,
+          userId: creatorId
+        });
+      } catch (error) {
+        console.error('Error creating jam:', error);
+        socket.emit('jamError', 'Internal server error.');
+      }
+    });
+
+    socket.on('getLiveJams', () => {
+      const liveJams = Array.from(jams.values());
+      socket.emit('liveJams', liveJams);
+    });
+
+    socket.on('joinJam', (data) => {
+      const { jamId, userId } = data;
+      const jam = jams.get(jamId);
+      if (!jam)
+        return socket.emit('jamError', 'Jam not found.');
+
+      try {
+        // add the user to the jam
+        const exists = jam.participants.find(p => p.socketId === socket.id);
+        if (!exists) {
+          jam.participants.push({ userId, socketId: socket.id });
+        }
+
+        socket.join(jamId);
+        socket.jamId = jamId;
+
+        // Ask the host to send the current time
+        io.to(jam.host).emit('requestJamCurrentTime', {
+          requesterId: socket.id
+        });
+
+        console.log(`Socket ${socket.id} joined jam room ${jamId}`);
+
+        // Emit the current state of the jam to the user who joined
+        socket.emit('jamJoined', {
+          jamId,
+          participants: jam.participants,
+          songIds: jam.songIds
+        });
+
+        // Notify the rest
+        socket.to(jamId).emit('jamParticipantJoined', {
+          jamId,
+          userId: socket.id
+        });
+
+      } catch (error) {
+        socket.emit('jamError', error.message);
+      }
+    });
+
+    socket.on('sendCurrentTimeJam', ({ requesterId, currentTime }) => {
+      const jam = jams.get(socket.jamId);
+      if (!jam) return socket.emit('jamError', 'Jam not found.');
+
+      io.to(requesterId).emit('receivedJamCurrentStatus', {
+        currentTime,
+        currentSong: jam.currentSong,
+        currentStatus: jam.currentStatus
+      });
+    });
+
+    socket.on('leaveJam', () => {
+      const jamId = socket.jamId;
+      const jam = jams.get(jamId);
+      if (!jam)
+        return socket.emit('jamError', 'Jam not found.');
+
+      try {
+        // Remove participant
+        jam.participants = jam.participants.filter(p => p.socketId !== socket.id);
+
+        socket.to(jamId).emit('jamParticipantLeft', {
+          jamId,
+          userId: socket.id
+        });
+
+        // If host leaves, find a new host
+        if (jam.host === socket.id) {
+          if (jam.participants.length > 0) {
+            const newHost = jam.participants[0];
+            jam.host = newHost.socketId;
+
+            io.to(jamId).emit('jamHostUpdated', {
+              jamId,
+              newHostId: newHost.socketId
+            });
+
+            console.log(`Nuevo host en JAM ${jamId}: ${newHost.socketId}`);
+          } else {
+            // No participants left, delete the jam
+            jams.delete(jamId);
+            console.log(`JAM ${jamId} deleted (no participants).`);
+            return;
+          }
+        }
+
+        // Limpiar socket
+        socket.leave(jamId);
+        delete socket.jamId;
+
+        socket.emit('jamLeft', { jamId });
+
+      } catch (error) {
+        socket.emit('jamError', error.message);
+      }
+    });
+
+    socket.on('deleteJam', () => {
+      const jamId = socket.jamId;
+      const jam = jams.get(jamId);
+      if (!jam)
+        return socket.emit('jamError', 'Jam not found.');
+
+      if (jam.host !== socket.id) {
+        return socket.emit('jamError', 'Only the host can delete the JAM.');
+      }
+
+      try {
+        io.to(jamId).emit('jamClosed', {
+          jamId,
+          message: 'ElJAM has been deleted by host.'
+        });
+
+        for (const participant of jam.participants) {
+          const participantSocket = io.sockets.sockets.get(participant.socketId);
+          if (participantSocket) {
+            participantSocket.leave(jamId);
+            delete participantSocket.jamId;
+          }
+        }
+
+        jams.delete(jamId);
+        console.log(`JAM ${jamId} deleted by host.`);
+      } catch (error) {
+        socket.emit('jamError', 'Internal server error.');
+      }
+    });
+
+    socket.on('updateJam', (data) => {
+      const { songId, currentStatus } = data;
+      const jamId = socket.jamId;
+
+      if (!jamId || !songId || !currentStatus) {
+        return socket.emit('jamError', 'jamId, songId and currentStatus are required.');
+      }
+
+      try {
+        const jam = jams.get(jamId);
+        if (!jam) return socket.emit('jamError', 'Jam not found.');
+
+        jam.currentSong = songId;
+        jam.currentTime = 0;
+        jam.currentStatus = currentStatus;
+
+        io.to(jamId).emit('receiveJamSongUpdate', {
+          currentSong: songId,
+          currentTime: 0,
+          currentStatus
+        });
+
+      } catch (error) {
+        socket.emit('jamError', 'Internal server error.');
+      }
+    });
+
+    socket.on('addSongToJam', ({ songId }) => {
+      const jamId = socket.jamId;
+      const jam = jams.get(jamId);
+
+      if (!jam) return socket.emit('jamError', 'Jam not found.');
+      if (!songId) return socket.emit('jamError', 'No songId provided.');
+
+      try {
+        jam.songIds.push(songId);
+
+        io.to(jamId).emit('jamPlaylistUpdated', {
+          songIds: jam.songIds
+        });
+      } catch (error) {
+        socket.emit('jamError', 'Internal server error.');
+      }
+    });
+
+    //========== JAM Playback Control ==========
+    
+    socket.on('updateJamTime', ({ currentTime }) => {
+      const jamId = socket.jamId;
+      const jam = jams.get(jamId);
+
+      if (!jam) return socket.emit('jamError', 'Jam not found.');
+
+      jam.currentTime = currentTime;
+
+      socket.to(jamId).emit('receiveJamTimeUpdate', {
+        currentTime
+      });
+    });
+
+    socket.on('updateJamStatus', ({ currentStatus }) => {
+      const jamId = socket.jamId;
+      const jam = jams.get(jamId);
+
+      if (!jam) return socket.emit('jamError', 'Jam not found.');
+
+      jam.currentStatus = currentStatus;
+
+      socket.to(jamId).emit('receiveJamStatusUpdate', {
+        currentStatus
+      });
+    });
+
+
 
     //========== Disconnect ==========
     socket.on('disconnect', () => {
